@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WanderSafe — AI Global Tourist Discovery</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#dde4f0;font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:20px 16px 40px;gap:28px;flex-wrap:wrap}
+@media(max-width:420px){body{padding:0}}
+
+/* PHONE */
+.phone{width:375px;height:780px;background:#111;border-radius:48px;padding:12px;position:relative;box-shadow:0 28px 70px rgba(0,0,0,0.35),inset 0 0 0 1px rgba(255,255,255,0.08);flex-shrink:0}
+.phone-inner{width:100%;height:100%;border-radius:38px;overflow:hidden;background:#f0f4fb;position:relative;display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:32px;background:#111;border-radius:0 0 20px 20px;z-index:200}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden}
+.screen.active{display:flex}
+.status{height:44px;background:#0f172a;display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0;color:#fff;font-size:11px;font-weight:600}
+
+/* TOP BAR */
+.topbar{background:#0f172a;padding:10px 14px 13px;flex-shrink:0}
+.tbrow{display:flex;align-items:center;gap:10px}
+.back{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar h2{font-size:16px;font-weight:700;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:3px;padding-left:42px}
+
+/* SCROLLABLE CONTENT */
+.scroll{flex:1;overflow-y:auto;padding:12px 12px 80px;display:flex;flex-direction:column;gap:9px}
+.scroll::-webkit-scrollbar{display:none}
+
+/* BOTTOM NAV */
+.bnav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid rgba(0,0,0,0.07);display:flex;padding:7px 0 16px;z-index:100}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:transparent}
+.ni-ic{font-size:19px;color:#9ca3af}.ni-lb{font-size:10px;color:#9ca3af;font-weight:500}
+.ni.on .ni-ic,.ni.on .ni-lb{color:#6366f1}
+.nd{width:5px;height:5px;border-radius:50%;background:#6366f1;margin:0 auto}
+
+/* HOME ELEMENTS */
+.welcome{background:linear-gradient(135deg,#6366f1,#4338ca);border-radius:18px;padding:16px;color:#fff;margin-bottom:4px}
+.wt{font-size:17px;font-weight:700;margin-bottom:3px}
+.ws{font-size:12px;opacity:.85;line-height:1.5}
+.wstats{display:flex;gap:14px;margin-top:10px}
+.wsn{font-size:18px;font-weight:700}.wsl{font-size:10px;opacity:.7}
+.sec-h{font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px}
+
+/* SEARCH */
+.sbar-wrap{background:#0f172a;padding:0 14px 13px;flex-shrink:0}
+.sbox{background:rgba(255,255,255,0.12);border-radius:11px;padding:9px 13px;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;border:1px solid rgba(255,255,255,0.1)}
+
+/* COUNTRY GRID */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.ccard{background:#fff;border-radius:14px;padding:13px;cursor:pointer;border:1px solid rgba(0,0,0,0.06);transition:transform .12s}
+.ccard:hover{transform:translateY(-2px)}
+.cf{font-size:26px;margin-bottom:5px}.cn{font-size:13px;font-weight:700;color:#1e293b}.ct{font-size:11px;color:#64748b}
+
+/* LIST ITEM */
+.list-item{background:#fff;border-radius:13px;padding:13px 15px;cursor:pointer;border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;gap:12px;transition:all .12s}
+.list-item:hover{border-color:#6366f1;transform:translateX(3px)}
+.li-ico{width:40px;height:40px;border-radius:10px;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.li-info{flex:1;min-width:0}
+.li-name{font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-sub{font-size:11px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-arrow{font-size:14px;color:#94a3b8;flex-shrink:0}
+
+/* PLACE CARD */
+.pcard{background:#fff;border-radius:15px;overflow:hidden;cursor:pointer;border:1px solid rgba(0,0,0,0.06);transition:transform .12s}
+.pcard:hover{transform:translateY(-2px)}
+.pcard-imgs{display:flex;height:130px;gap:2px}
+.pcard-imgs .pm{flex:2;object-fit:cover;display:block}
+.pcard-imgs .ps{flex:1;display:flex;flex-direction:column;gap:2px}
+.pcard-imgs .ps img{flex:1;object-fit:cover;width:100%;display:block}
+.pcard-body{padding:11px 12px}
+.pcard-name{font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px}
+.pcard-desc{font-size:11px;color:#64748b;line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pcard-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+
+/* BADGES */
+.sb{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px}
+.safe{background:#dcfce7;color:#15803d}
+.moderate{background:#fef9c3;color:#92400e}
+.caution{background:#fee2e2;color:#991b1b}
+.rb{font-size:10px;color:#d97706;font-weight:600}
+.tb{font-size:10px;color:#6366f1;background:#eef2ff;padding:2px 7px;border-radius:99px}
+
+/* DETAIL */
+.dscroll{flex:1;overflow-y:auto;padding-bottom:80px}
+.dscroll::-webkit-scrollbar{display:none}
+.dgal{display:flex;gap:6px;padding:10px 12px;overflow-x:auto}
+.dgal::-webkit-scrollbar{display:none}
+.dgal img{height:155px;width:195px;border-radius:13px;object-fit:cover;flex-shrink:0}
+.dbody{padding:13px}
+.dname{font-size:19px;font-weight:700;color:#1e293b;margin-bottom:5px;line-height:1.3}
+.dmeta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.dscard{border-radius:11px;padding:11px 13px;margin-bottom:12px}
+.safe-c{background:#f0fdf4;border:1px solid #bbf7d0}
+.mod-c{background:#fefce8;border:1px solid #fde68a}
+.cau-c{background:#fef2f2;border:1px solid #fecaca}
+.dsh{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;margin-bottom:4px;color:#1e293b}
+.sdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.safe-d{background:#22c55e}.mod-d{background:#eab308}.cau-d{background:#ef4444}
+.dsn{font-size:12px;color:#475569;line-height:1.55}
+.vig{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}
+.vi{background:#f8faff;border-radius:9px;padding:9px 11px}
+.vil{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;font-weight:600}
+.viv{font-size:12px;font-weight:600;color:#1e293b}
+.ds{margin-bottom:14px}
+.dst{font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.dsb{font-size:13px;color:#475569;line-height:1.75}
+.tl{display:flex;flex-direction:column;gap:6px}
+.ti{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#475569;line-height:1.55}
+.tdot{width:6px;height:6px;border-radius:50%;background:#6366f1;flex-shrink:0;margin-top:5px}
+.lnav{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px;padding:14px}
+.lnb{padding:9px 17px;border-radius:7px;border:1px solid rgba(0,0,0,0.1);background:transparent;color:#64748b;cursor:pointer;font-size:12px;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif}
+.lnb:hover{border-color:#6366f1;color:#6366f1}
+.lnb.pr{background:#6366f1;color:#fff;border-color:#6366f1;font-weight:600}
+
+/* FILTER CHIPS */
+.frow{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:8px}
+.frow::-webkit-scrollbar{display:none}
+.chip{padding:5px 12px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;flex-shrink:0;border:1px solid rgba(0,0,0,0.1);background:#fff;color:#64748b;transition:all .12s}
+.chip.on{background:#6366f1;color:#fff;border-color:#6366f1}
+
+/* LOADING */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:14px;flex:1}
+.spinner{width:36px;height:36px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:#64748b;text-align:center;line-height:1.6}
+.loading-sub{font-size:11px;color:#94a3b8;margin-top:4px;text-align:center}
+
+/* SKELETON */
+.skel{background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ERROR */
+.err-box{background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;text-align:center;margin:12px}
+.err-icon{font-size:28px;margin-bottom:8px}
+.err-title{font-size:14px;font-weight:700;color:#991b1b;margin-bottom:6px}
+.err-msg{font-size:12px;color:#ef4444;line-height:1.6;margin-bottom:12px}
+.err-btn{padding:8px 18px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+
+/* Mobile full screen */
+@media(max-width:420px){
+  .phone{width:100vw;height:100dvh;border-radius:0;padding:0;box-shadow:none}
+  .phone-inner{border-radius:0}
+  .notch{display:none}
+}
+
+/* BREADCRUMB */
+.breadcrumb{font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:4px;padding-left:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Plus Jakarta Sans',sans-serif}
+
+/* AI BADGE */
+.ai-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:99px;padding:3px 10px;font-size:10px;font-weight:600;color:#6366f1;margin-bottom:10px}
+
+/* SETUP SCREEN */
+.setup-screen{position:absolute;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a5f);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;z-index:999;text-align:center}
+.setup-logo{font-size:48px;margin-bottom:12px}
+.setup-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px}
+.setup-sub{font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:24px}
+.setup-label{font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-align:left;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase}
+.setup-input{width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:12px 14px;font-size:13px;color:#fff;outline:none;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:8px}
+.setup-input::placeholder{color:rgba(255,255,255,0.35)}
+.setup-input:focus{border-color:#6366f1;background:rgba(99,102,241,0.15)}
+.setup-btn{width:100%;padding:13px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:4px;transition:background .15s}
+.setup-btn:hover{background:#4f46e5}
+.setup-hint{font-size:11px;color:rgba(255,255,255,0.4);margin-top:12px;line-height:1.6}
+.setup-hint a{color:#818cf8;text-decoration:none}
+.setup-err{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px;font-size:12px;color:#fca5a5;margin-top:8px;display:none}
+.setup-testing{font-size:12px;color:rgba(255,255,255,0.5);margin-top:10px;display:none}
+</style>
+</head>
+<body>
+
+<!-- PHONE -->
+<div class="phone">
+  <div class="notch"></div>
+  <div class="phone-inner">
+
+    <!-- HOME -->
+    <div class="screen active" id="s-home">
+      <div class="status"><span>9:41</span><span>◉◉◉◉ WiFi</span><span>🔋</span></div>
+      <div style="background:#0f172a;padding:12px 14px 0;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+          <div><div style="font-size:11px;color:rgba(255,255,255,0.5)">AI-Powered · Global</div><div style="font-size:18px;font-weight:700;color:#fff">WanderSafe 🧭</div></div>
+          <div style="width:34px;height:34px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:16px">🌍</div>
+        </div>
+        <div class="sbox" onclick="goScreen('s-countries')"><span>🔍</span><span>Search any country, city, area...</span></div>
+        <div style="height:12px"></div>
+      </div>
+      <div class="scroll">
+        <div class="welcome">
+          <div class="ai-badge">🤖 Powered by Claude AI</div>
+          <div class="wt">Discover Anywhere on Earth</div>
+          <div class="ws">Select any country → state → city → area → and our AI generates tourist places, safety ratings, photos and tips — for every location on Earth.</div>
+          <div class="wstats">
+            <div><div class="wsn">195+</div><div class="wsl">Countries</div></div>
+            <div><div class="wsn">∞</div><div class="wsl">Cities & Areas</div></div>
+            <div><div class="wsn">AI</div><div class="wsl">Generated Live</div></div>
+          </div>
+        </div>
+        <div class="sec-h">🌏 Browse by Region</div>
+        <div class="cgrid">
+          <div class="ccard" onclick="goScreen('s-countries','Asia')"><div class="cf">🌏</div><div class="cn">Asia</div><div class="ct">50 countries</div></div>
+          <div class="ccard" onclick="goScreen('s-countries','Europe')"><div class="cf">🌍</div><div class="cn">Europe</div><div class="ct">44 countries</div></div>
+          <div class="ccard" onclick="goScreen('s-countries','Americas')"><div class="cf">🌎</div><div class="cn">Americas</div><div class="ct">35 countries</div></div>
+          <div class="ccard" onclick="goScreen('s-countries','Africa')"><div class="cf">🌍</div><div class="cn">Africa</div><div class="ct">54 countries</div></div>
+          <div class="ccard" onclick="goScreen('s-countries','Middle East')"><div class="cf">🕌</div><div class="cn">Middle East</div><div class="ct">18 countries</div></div>
+          <div class="ccard" onclick="goScreen('s-countries','Oceania')"><div class="cf">🏝</div><div class="cn">Oceania</div><div class="ct">14 countries</div></div>
+        </div>
+        <div class="sec-h" style="margin-top:8px">🔥 Popular Destinations</div>
+        <div class="list-item" onclick="quickNav('India','Rajasthan','Jaipur','Old City')"><div class="li-ico">🏰</div><div class="li-info"><div class="li-name">Old City, Jaipur</div><div class="li-sub">Rajasthan, India</div></div><span class="sb safe" style="flex-shrink:0">✓ Safe</span></div>
+        <div class="list-item" onclick="quickNav('France','Île-de-France','Paris','Montmartre')"><div class="li-ico">🎭</div><div class="li-info"><div class="li-name">Montmartre, Paris</div><div class="li-sub">Île-de-France, France</div></div><span class="sb safe" style="flex-shrink:0">✓ Safe</span></div>
+        <div class="list-item" onclick="quickNav('Japan','Tokyo','Tokyo City','Shibuya')"><div class="li-ico">🗾</div><div class="li-info"><div class="li-name">Shibuya, Tokyo</div><div class="li-sub">Tokyo, Japan</div></div><span class="sb safe" style="flex-shrink:0">✓ Safe</span></div>
+        <div class="list-item" onclick="quickNav('Italy','Lazio','Rome','Historic Centre')"><div class="li-ico">🏛</div><div class="li-info"><div class="li-name">Historic Centre, Rome</div><div class="li-sub">Lazio, Italy</div></div><span class="sb safe" style="flex-shrink:0">✓ Safe</span></div>
+        <div class="list-item" onclick="quickNav('UAE','Dubai','Dubai City','Downtown Dubai')"><div class="li-ico">🏙</div><div class="li-info"><div class="li-name">Downtown Dubai, UAE</div><div class="li-sub">Dubai Emirate, UAE</div></div><span class="sb safe" style="flex-shrink:0">✓ Safe</span></div>
+      </div>
+      <div class="bnav">
+        <button class="ni on" onclick="goScreen('s-home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div><div class="nd"></div></button>
+        <button class="ni" onclick="goScreen('s-countries')"><div class="ni-ic">🌍</div><div class="ni-lb">Explore</div></button>
+        <button class="ni"><div class="ni-ic">❤️</div><div class="ni-lb">Saved</div></button>
+        <button class="ni"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+      </div>
+    </div>
+
+    <!-- COUNTRIES -->
+    <div class="screen" id="s-countries">
+      <div class="status"><span>9:41</span><span></span><span>🔋</span></div>
+      <div class="topbar">
+        <div class="tbrow"><button class="back" onclick="goBack()">←</button><h2 id="countries-h">Choose Country</h2></div>
+        <div style="padding:10px 0 0;"><input class="csearch" id="country-search" placeholder="🔍  Search country..." oninput="filterCountries(this.value)"/></div>
+      </div>
+      <div class="scroll" id="countries-list"></div>
+      <div class="bnav"><button class="ni" onclick="goScreen('s-home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button><button class="ni on"><div class="ni-ic">🌍</div><div class="ni-lb">Explore</div><div class="nd"></div></button><button class="ni"><div class="ni-ic">❤️</div><div class="ni-lb">Saved</div></button><button class="ni"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button></div>
+    </div>
+
+    <!-- STATES -->
+    <div class="screen" id="s-states">
+      <div class="status"><span>9:41</span><span></span><span>🔋</span></div>
+      <div class="topbar">
+        <div class="tbrow"><button class="back" onclick="goBack()">←</button><h2 id="states-h">States / Regions</h2></div>
+        <div class="breadcrumb" id="states-bc"></div>
+        <div class="topbar-sub" id="states-sub">Select a state or region</div>
+      </div>
+      <div class="scroll" id="states-list"></div>
+      <div class="bnav"><button class="ni" onclick="goScreen('s-home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button><button class="ni on"><div class="ni-ic">🌍</div><div class="ni-lb">Explore</div><div class="nd"></div></button><button class="ni"><div class="ni-ic">❤️</div><div class="ni-lb">Saved</div></button><button class="ni"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button></div>
+    </div>
+
+    <!-- CITIES -->
+    <div class="screen" id="s-cities">
+      <div class="status"><span>9:41</span><span></span><span>🔋</span></div>
+      <div class="topbar">
+        <div class="tbrow"><button class="back" onclick="goBack()">←</button><h2 id="cities-h">Cities</h2></div>
+        <div class="breadcrumb" id="cities-bc"></div>
+        <div class="topbar-sub" id="cities-sub">Select a city</div>
+      </div>
+      <div class="scroll" id="cities-list"></div>
+      <div class="bnav"><button class="ni" onclick="goScreen('s-home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button><button class="ni on"><div class="ni-ic">🌍</div><div class="ni-lb">Explore</div><div class="nd"></div></button><button class="ni"><div class="ni-ic">❤️</div><div class="ni-lb">Saved</div></button><button class="ni"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button></div>
+    </div>
+
+    <!-- AREAS -->
+    <div class="screen" id="s-areas">
+      <div class="status"><span>9:41</span><span></span><span>🔋</span></div>
+      <div class="topbar">
+        <div class="tbrow"><button class="back" onclick="goBack()">←</button><h2 id="areas-h">Areas</h2></div>
+        <div class="breadcrumb" id="areas-bc"></div>
+        <div class="topbar-sub" id="areas-sub">Select an area or neighbourhood</div>
+      </div>
+      <div class="scroll" id="areas-list"></div>
+      <div class="bnav"><button class="ni" onclick="goScreen('s-home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button><button class="ni on"><div class="ni-ic">🌍</div><div class="ni-lb">Explore</div><div class="nd"></div></button><button class="ni"><div class="ni-ic">❤️</div><div class="ni-lb">Saved</div></button><button class="ni"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button></div>
+    </div>
+
+    <!-- PLACES -->
+    <div class="screen" id="s-places">
+      <div class="status"><span>9:41</span><span></span><span>🔋</span></div>
+      <div class="topbar">
+        <div class="tbrow"><button class="back" onclick="goBack()">←</button><h2 id="places-h">Places</h2></div>
+        <div class="breadcrumb" id="places-bc"></div>
+        <div class="topbar-sub" id="places-sub">Tourist attractions</div>
+      </div>
+      <div class="scroll" style="padding-top:10px">
+        <div class="frow">
+          <div class="chip on" onclick="applyFilter('all',this)">All</div>
+          <div class="chip" onclick="applyFilter('safe',this)">✓ Safe Only</div>
+          <div class="chip" onclick="applyFilter('historical',this)">🏛 Historical</div>
+          <div class="chip" onclick="applyFilter('nature',this)">🌿 Nature</div>
+          <div class="chip" onclick="applyFilter('religious',this)">🙏 Religious</div>
+          <div class="chip" onclick="applyFilter('food',this)">🍜 Food</div>
+          <div class="chip" onclick="applyFilter('beach',this)">🏖 Beach</div>
+        </div>
+        <div id="places-list"></div>
+      </div>
+      <div class="bnav"><button class="ni" onclick="goScreen('s-home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button><button class="ni on"><div class="ni-ic">🌍</div><div class="ni-lb">Explore</div><div class="nd"></div></button><button class="ni"><div class="ni-ic">❤️</div><div class="ni-lb">Saved</div></button><button class="ni"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button></div>
+    </div>
+
+    <!-- DETAIL -->
+    <div class="screen" id="s-detail">
+      <div class="status"><span>9:41</span><span></span><span>🔋</span></div>
+      <div class="topbar" style="padding-bottom:11px">
+        <div class="tbrow"><button class="back" onclick="goBack()">←</button><h2 id="detail-h" style="font-size:14px">Place Detail</h2><div style="margin-left:auto;font-size:18px;cursor:pointer">❤️</div></div>
+      </div>
+      <div class="dscroll">
+        <div class="dgal" id="detail-gal"></div>
+        <div class="dbody">
+          <div class="dname" id="detail-name"></div>
+          <div class="dmeta" id="detail-meta"></div>
+          <div id="detail-safety"></div>
+          <div class="vig" id="detail-vig"></div>
+          <div class="ds"><div class="dst">✨ What makes it special</div><div class="dsb" id="detail-spec"></div></div>
+          <div class="ds"><div class="dst">📖 About this place</div><div class="dsb" id="detail-about"></div></div>
+          <div class="ds"><div class="dst">🍽 Local food nearby</div><div class="dsb" id="detail-food"></div></div>
+          <div class="ds"><div class="dst">💡 Visitor tips</div><div class="tl" id="detail-tips"></div></div>
+        </div>
+        <div class="lnav" id="detail-nav"></div>
+      </div>
+      <div class="bnav"><button class="ni" onclick="goScreen('s-home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button><button class="ni on"><div class="ni-ic">🌍</div><div class="ni-lb">Explore</div><div class="nd"></div></button><button class="ni"><div class="ni-ic">❤️</div><div class="ni-lb">Saved</div></button><button class="ni"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button></div>
+    </div>
+
+  </div>
+</div>
+
+
+
+<script>
+// ═══════════════════════════════════════
+// ALL WORLD COUNTRIES — 195+
+// ═══════════════════════════════════════
+const ALL_COUNTRIES = [
+  {name:"Afghanistan",flag:"🇦🇫",region:"Asia"},{name:"Albania",flag:"🇦🇱",region:"Europe"},
+  {name:"Algeria",flag:"🇩🇿",region:"Africa"},{name:"Andorra",flag:"🇦🇩",region:"Europe"},
+  {name:"Angola",flag:"🇦🇴",region:"Africa"},{name:"Antigua and Barbuda",flag:"🇦🇬",region:"Americas"},
+  {name:"Argentina",flag:"🇦🇷",region:"Americas"},{name:"Armenia",flag:"🇦🇲",region:"Asia"},
+  {name:"Australia",flag:"🇦🇺",region:"Oceania"},{name:"Austria",flag:"🇦🇹",region:"Europe"},
+  {name:"Azerbaijan",flag:"🇦🇿",region:"Asia"},{name:"Bahamas",flag:"🇧🇸",region:"Americas"},
+  {name:"Bahrain",flag:"🇧🇭",region:"Middle East"},{name:"Bangladesh",flag:"🇧🇩",region:"Asia"},
+  {name:"Barbados",flag:"🇧🇧",region:"Americas"},{name:"Belarus",flag:"🇧🇾",region:"Europe"},
+  {name:"Belgium",flag:"🇧🇪",region:"Europe"},{name:"Belize",flag:"🇧🇿",region:"Americas"},
+  {name:"Benin",flag:"🇧🇯",region:"Africa"},{name:"Bhutan",flag:"🇧🇹",region:"Asia"},
+  {name:"Bolivia",flag:"🇧🇴",region:"Americas"},{name:"Bosnia and Herzegovina",flag:"🇧🇦",region:"Europe"},
+  {name:"Botswana",flag:"🇧🇼",region:"Africa"},{name:"Brazil",flag:"🇧🇷",region:"Americas"},
+  {name:"Brunei",flag:"🇧🇳",region:"Asia"},{name:"Bulgaria",flag:"🇧🇬",region:"Europe"},
+  {name:"Burkina Faso",flag:"🇧🇫",region:"Africa"},{name:"Burundi",flag:"🇧🇮",region:"Africa"},
+  {name:"Cambodia",flag:"🇰🇭",region:"Asia"},{name:"Cameroon",flag:"🇨🇲",region:"Africa"},
+  {name:"Canada",flag:"🇨🇦",region:"Americas"},{name:"Cape Verde",flag:"🇨🇻",region:"Africa"},
+  {name:"Central African Republic",flag:"🇨🇫",region:"Africa"},{name:"Chad",flag:"🇹🇩",region:"Africa"},
+  {name:"Chile",flag:"🇨🇱",region:"Americas"},{name:"China",flag:"🇨🇳",region:"Asia"},
+  {name:"Colombia",flag:"🇨🇴",region:"Americas"},{name:"Comoros",flag:"🇰🇲",region:"Africa"},
+  {name:"Congo",flag:"🇨🇬",region:"Africa"},{name:"Costa Rica",flag:"🇨🇷",region:"Americas"},
+  {name:"Croatia",flag:"🇭🇷",region:"Europe"},{name:"Cuba",flag:"🇨🇺",region:"Americas"},
+  {name:"Cyprus",flag:"🇨🇾",region:"Europe"},{name:"Czech Republic",flag:"🇨🇿",region:"Europe"},
+  {name:"Denmark",flag:"🇩🇰",region:"Europe"},{name:"Djibouti",flag:"🇩🇯",region:"Africa"},
+  {name:"Dominican Republic",flag:"🇩🇴",region:"Americas"},{name:"DR Congo",flag:"🇨🇩",region:"Africa"},
+  {name:"Ecuador",flag:"🇪🇨",region:"Americas"},{name:"Egypt",flag:"🇪🇬",region:"Middle East"},
+  {name:"El Salvador",flag:"🇸🇻",region:"Americas"},{name:"Equatorial Guinea",flag:"🇬🇶",region:"Africa"},
+  {name:"Eritrea",flag:"🇪🇷",region:"Africa"},{name:"Estonia",flag:"🇪🇪",region:"Europe"},
+  {name:"Eswatini",flag:"🇸🇿",region:"Africa"},{name:"Ethiopia",flag:"🇪🇹",region:"Africa"},
+  {name:"Fiji",flag:"🇫🇯",region:"Oceania"},{name:"Finland",flag:"🇫🇮",region:"Europe"},
+  {name:"France",flag:"🇫🇷",region:"Europe"},{name:"Gabon",flag:"🇬🇦",region:"Africa"},
+  {name:"Gambia",flag:"🇬🇲",region:"Africa"},{name:"Georgia",flag:"🇬🇪",region:"Asia"},
+  {name:"Germany",flag:"🇩🇪",region:"Europe"},{name:"Ghana",flag:"🇬🇭",region:"Africa"},
+  {name:"Greece",flag:"🇬🇷",region:"Europe"},{name:"Grenada",flag:"🇬🇩",region:"Americas"},
+  {name:"Guatemala",flag:"🇬🇹",region:"Americas"},{name:"Guinea",flag:"🇬🇳",region:"Africa"},
+  {name:"Guinea-Bissau",flag:"🇬🇼",region:"Africa"},{name:"Guyana",flag:"🇬🇾",region:"Americas"},
+  {name:"Haiti",flag:"🇭🇹",region:"Americas"},{name:"Honduras",flag:"🇭🇳",region:"Americas"},
+  {name:"Hungary",flag:"🇭🇺",region:"Europe"},{name:"Iceland",flag:"🇮🇸",region:"Europe"},
+  {name:"India",flag:"🇮🇳",region:"Asia"},{name:"Indonesia",flag:"🇮🇩",region:"Asia"},
+  {name:"Iran",flag:"🇮🇷",region:"Middle East"},{name:"Iraq",flag:"🇮🇶",region:"Middle East"},
+  {name:"Ireland",flag:"🇮🇪",region:"Europe"},{name:"Israel",flag:"🇮🇱",region:"Middle East"},
+  {name:"Italy",flag:"🇮🇹",region:"Europe"},{name:"Ivory Coast",flag:"🇨🇮",region:"Africa"},
+  {name:"Jamaica",flag:"🇯🇲",region:"Americas"},{name:"Japan",flag:"🇯🇵",region:"Asia"},
+  {name:"Jordan",flag:"🇯🇴",region:"Middle East"},{name:"Kazakhstan",flag:"🇰🇿",region:"Asia"},
+  {name:"Kenya",flag:"🇰🇪",region:"Africa"},{name:"Kiribati",flag:"🇰🇮",region:"Oceania"},
+  {name:"Kuwait",flag:"🇰🇼",region:"Middle East"},{name:"Kyrgyzstan",flag:"🇰🇬",region:"Asia"},
+  {name:"Laos",flag:"🇱🇦",region:"Asia"},{name:"Latvia",flag:"🇱🇻",region:"Europe"},
+  {name:"Lebanon",flag:"🇱🇧",region:"Middle East"},{name:"Lesotho",flag:"🇱🇸",region:"Africa"},
+  {name:"Liberia",flag:"🇱🇷",region:"Africa"},{name:"Libya",flag:"🇱🇾",region:"Africa"},
+  {name:"Liechtenstein",flag:"🇱🇮",region:"Europe"},{name:"Lithuania",flag:"🇱🇹",region:"Europe"},
+  {name:"Luxembourg",flag:"🇱🇺",region:"Europe"},{name:"Madagascar",flag:"🇲🇬",region:"Africa"},
+  {name:"Malawi",flag:"🇲🇼",region:"Africa"},{name:"Malaysia",flag:"🇲🇾",region:"Asia"},
+  {name:"Maldives",flag:"🇲🇻",region:"Asia"},{name:"Mali",flag:"🇲🇱",region:"Africa"},
+  {name:"Malta",flag:"🇲🇹",region:"Europe"},{name:"Marshall Islands",flag:"🇲🇭",region:"Oceania"},
+  {name:"Mauritania",flag:"🇲🇷",region:"Africa"},{name:"Mauritius",flag:"🇲🇺",region:"Africa"},
+  {name:"Mexico",flag:"🇲🇽",region:"Americas"},{name:"Micronesia",flag:"🇫🇲",region:"Oceania"},
+  {name:"Moldova",flag:"🇲🇩",region:"Europe"},{name:"Monaco",flag:"🇲🇨",region:"Europe"},
+  {name:"Mongolia",flag:"🇲🇳",region:"Asia"},{name:"Montenegro",flag:"🇲🇪",region:"Europe"},
+  {name:"Morocco",flag:"🇲🇦",region:"Africa"},{name:"Mozambique",flag:"🇲🇿",region:"Africa"},
+  {name:"Myanmar",flag:"🇲🇲",region:"Asia"},{name:"Namibia",flag:"🇳🇦",region:"Africa"},
+  {name:"Nauru",flag:"🇳🇷",region:"Oceania"},{name:"Nepal",flag:"🇳🇵",region:"Asia"},
+  {name:"Netherlands",flag:"🇳🇱",region:"Europe"},{name:"New Zealand",flag:"🇳🇿",region:"Oceania"},
+  {name:"Nicaragua",flag:"🇳🇮",region:"Americas"},{name:"Niger",flag:"🇳🇪",region:"Africa"},
+  {name:"Nigeria",flag:"🇳🇬",region:"Africa"},{name:"North Korea",flag:"🇰🇵",region:"Asia"},
+  {name:"North Macedonia",flag:"🇲🇰",region:"Europe"},{name:"Norway",flag:"🇳🇴",region:"Europe"},
+  {name:"Oman",flag:"🇴🇲",region:"Middle East"},{name:"Pakistan",flag:"🇵🇰",region:"Asia"},
+  {name:"Palau",flag:"🇵🇼",region:"Oceania"},{name:"Palestine",flag:"🇵🇸",region:"Middle East"},
+  {name:"Panama",flag:"🇵🇦",region:"Americas"},{name:"Papua New Guinea",flag:"🇵🇬",region:"Oceania"},
+  {name:"Paraguay",flag:"🇵🇾",region:"Americas"},{name:"Peru",flag:"🇵🇪",region:"Americas"},
+  {name:"Philippines",flag:"🇵🇭",region:"Asia"},{name:"Poland",flag:"🇵🇱",region:"Europe"},
+  {name:"Portugal",flag:"🇵🇹",region:"Europe"},{name:"Qatar",flag:"🇶🇦",region:"Middle East"},
+  {name:"Romania",flag:"🇷🇴",region:"Europe"},{name:"Russia",flag:"🇷🇺",region:"Europe"},
+  {name:"Rwanda",flag:"🇷🇼",region:"Africa"},{name:"Saint Kitts and Nevis",flag:"🇰🇳",region:"Americas"},
+  {name:"Saint Lucia",flag:"🇱🇨",region:"Americas"},{name:"Saint Vincent and the Grenadines",flag:"🇻🇨",region:"Americas"},
+  {name:"Samoa",flag:"🇼🇸",region:"Oceania"},{name:"San Marino",flag:"🇸🇲",region:"Europe"},
+  {name:"Saudi Arabia",flag:"🇸🇦",region:"Middle East"},{name:"Senegal",flag:"🇸🇳",region:"Africa"},
+  {name:"Serbia",flag:"🇷🇸",region:"Europe"},{name:"Seychelles",flag:"🇸🇨",region:"Africa"},
+  {name:"Sierra Leone",flag:"🇸🇱",region:"Africa"},{name:"Singapore",flag:"🇸🇬",region:"Asia"},
+  {name:"Slovakia",flag:"🇸🇰",region:"Europe"},{name:"Slovenia",flag:"🇸🇮",region:"Europe"},
+  {name:"Solomon Islands",flag:"🇸🇧",region:"Oceania"},{name:"Somalia",flag:"🇸🇴",region:"Africa"},
+  {name:"South Africa",flag:"🇿🇦",region:"Africa"},{name:"South Korea",flag:"🇰🇷",region:"Asia"},
+  {name:"South Sudan",flag:"🇸🇸",region:"Africa"},{name:"Spain",flag:"🇪🇸",region:"Europe"},
+  {name:"Sri Lanka",flag:"🇱🇰",region:"Asia"},{name:"Sudan",flag:"🇸🇩",region:"Africa"},
+  {name:"Suriname",flag:"🇸🇷",region:"Americas"},{name:"Sweden",flag:"🇸🇪",region:"Europe"},
+  {name:"Switzerland",flag:"🇨🇭",region:"Europe"},{name:"Syria",flag:"🇸🇾",region:"Middle East"},
+  {name:"Taiwan",flag:"🇹🇼",region:"Asia"},{name:"Tajikistan",flag:"🇹🇯",region:"Asia"},
+  {name:"Tanzania",flag:"🇹🇿",region:"Africa"},{name:"Thailand",flag:"🇹🇭",region:"Asia"},
+  {name:"Timor-Leste",flag:"🇹🇱",region:"Asia"},{name:"Togo",flag:"🇹🇬",region:"Africa"},
+  {name:"Tonga",flag:"🇹🇴",region:"Oceania"},{name:"Trinidad and Tobago",flag:"🇹🇹",region:"Americas"},
+  {name:"Tunisia",flag:"🇹🇳",region:"Africa"},{name:"Turkey",flag:"🇹🇷",region:"Asia"},
+  {name:"Turkmenistan",flag:"🇹🇲",region:"Asia"},{name:"Tuvalu",flag:"🇹🇻",region:"Oceania"},
+  {name:"Uganda",flag:"🇺🇬",region:"Africa"},{name:"Ukraine",flag:"🇺🇦",region:"Europe"},
+  {name:"United Arab Emirates",flag:"🇦🇪",region:"Middle East"},{name:"United Kingdom",flag:"🇬🇧",region:"Europe"},
+  {name:"United States",flag:"🇺🇸",region:"Americas"},{name:"Uruguay",flag:"🇺🇾",region:"Americas"},
+  {name:"Uzbekistan",flag:"🇺🇿",region:"Asia"},{name:"Vanuatu",flag:"🇻🇺",region:"Oceania"},
+  {name:"Vatican City",flag:"🇻🇦",region:"Europe"},{name:"Venezuela",flag:"🇻🇪",region:"Americas"},
+  {name:"Vietnam",flag:"🇻🇳",region:"Asia"},{name:"Yemen",flag:"🇾🇪",region:"Middle East"},
+  {name:"Zambia",flag:"🇿🇲",region:"Africa"},{name:"Zimbabwe",flag:"🇿🇼",region:"Africa"}
+];
+
+// ═══════════════════════════════════════
+// STATE & CACHE
+// ═══════════════════════════════════════
+let screenStack = ['s-home'];
+let ctx = { country:'', state:'', city:'', area:'' };
+let cache = {};
+let currentPlaces = [];
+let currentRegionFilter = null;
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function goScreen(id, data) {
+  document.getElementById(screenStack[screenStack.length-1]).classList.remove('active');
+  screenStack.push(id);
+  const s = document.getElementById(id);
+  s.classList.add('active');
+  s.querySelector('.scroll,.dscroll')?.scrollTo(0,0);
+  if (data !== undefined) initScreen(id, data);
+}
+
+function goBack() {
+  if (screenStack.length <= 1) return;
+  document.getElementById(screenStack[screenStack.length-1]).classList.remove('active');
+  screenStack.pop();
+  document.getElementById(screenStack[screenStack.length-1]).classList.add('active');
+}
+
+function initScreen(id, data) {
+  if (id === 's-countries') initCountries(data);
+  else if (id === 's-states') initStates(data);
+  else if (id === 's-cities') initCities(data);
+  else if (id === 's-areas') initAreas(data);
+  else if (id === 's-places') initPlaces(data);
+  else if (id === 's-detail') initDetail(data);
+}
+
+// ═══════════════════════════════════════
+// COUNTRIES SCREEN
+// ═══════════════════════════════════════
+function initCountries(region) {
+  currentRegionFilter = region || null;
+  document.getElementById('countries-h').textContent = region ? `${region} Countries` : 'All Countries';
+  document.getElementById('country-search').value = '';
+  renderCountryList(ALL_COUNTRIES.filter(c => !region || c.region === region));
+}
+
+function filterCountries(q) {
+  const filtered = ALL_COUNTRIES.filter(c =>
+    (!currentRegionFilter || c.region === currentRegionFilter) &&
+    c.name.toLowerCase().includes(q.toLowerCase())
+  );
+  renderCountryList(filtered);
+}
+
+function renderCountryList(list) {
+  document.getElementById('countries-list').innerHTML = list.map(c => `
+    <div class="list-item" onclick="selectCountry('${c.name.replace(/'/g,"\\'")}','${c.flag}')">
+      <div class="li-ico" style="font-size:22px;background:none">${c.flag}</div>
+      <div class="li-info"><div class="li-name">${c.name}</div><div class="li-sub">${c.region}</div></div>
+      <div class="li-arrow">›</div>
+    </div>`).join('');
+}
+
+function selectCountry(name, flag) {
+  ctx.country = name;
+  ctx.countryFlag = flag;
+  goScreen('s-states', name);
+}
+
+// ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// AI CALL — calls your Netlify backend
+// Key is hidden on the server — users
+// never see it, GitHub never warns you
+// ═══════════════════════════════════════
+async function callAI(prompt, cacheKey) {
+  if (cache[cacheKey]) return cache[cacheKey];
+
+  const res = await fetch('/.netlify/functions/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to load. Please try again.');
+  }
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+  cache[cacheKey] = parsed;
+  return parsed;
+}
+
+function showLoading(containerId, msg, sub) {
+  document.getElementById(containerId).innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">${msg}</div>
+      <div class="loading-sub">${sub || 'Powered by Claude AI'}</div>
+    </div>`;
+}
+
+function showError(containerId, msg, retryFn) {
+  document.getElementById(containerId).innerHTML = `
+    <div class="err-box">
+      <div class="err-icon">⚠️</div>
+      <div class="err-title">Could not load</div>
+      <div class="err-msg">${msg}</div>
+      <button class="err-btn" onclick="${retryFn}">Try Again</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════
+// STATES
+// ═══════════════════════════════════════
+async function initStates(country) {
+  document.getElementById('states-h').textContent = ctx.countryFlag + ' ' + country;
+  document.getElementById('states-bc').textContent = country;
+  document.getElementById('states-sub').textContent = 'Select a state or region';
+  showLoading('states-list', `Loading states of ${country}...`, 'AI is generating regional data');
+
+  try {
+    const prompt = `List the 10-14 most important states, provinces, or regions of ${country} for tourism.
+Return ONLY a valid JSON array, no markdown. Each object:
+{"name":"State Name","tagline":"Short 4-6 word description","emoji":"1 relevant emoji","tourist_appeal":"high/medium/low"}
+Sort by tourist appeal (high first). Include all major tourist regions.`;
+
+    const states = await callAI(prompt, `states-${country}`);
+    document.getElementById('states-list').innerHTML = states.map(s => `
+      <div class="list-item" onclick="selectState('${s.name.replace(/'/g,"\\'")}')">
+        <div class="li-ico">${s.emoji || '🗺'}</div>
+        <div class="li-info">
+          <div class="li-name">${s.name}</div>
+          <div class="li-sub">${s.tagline}</div>
+        </div>
+        <div class="li-arrow">›</div>
+      </div>`).join('');
+  } catch(e) {
+    showError('states-list', 'Failed to load states. Check your connection.', `initStates('${country}')`);
+  }
+}
+
+function selectState(name) {
+  ctx.state = name;
+  goScreen('s-cities', name);
+}
+
+// ═══════════════════════════════════════
+// CITIES
+// ═══════════════════════════════════════
+async function initCities(state) {
+  document.getElementById('cities-h').textContent = state;
+  document.getElementById('cities-bc').textContent = `${ctx.country} › ${state}`;
+  document.getElementById('cities-sub').textContent = 'Select a city or town';
+  showLoading('cities-list', `Loading cities in ${state}...`, 'AI is generating city data');
+
+  try {
+    const prompt = `List the 8-12 most important tourist cities and towns in ${state}, ${ctx.country}.
+Return ONLY a valid JSON array, no markdown. Each object:
+{"name":"City Name","tagline":"Short 4-6 word description","emoji":"1 relevant emoji","known_for":"What it is famous for in 8 words"}
+Sort by tourist importance.`;
+
+    const cities = await callAI(prompt, `cities-${ctx.country}-${state}`);
+    document.getElementById('cities-list').innerHTML = cities.map(c => `
+      <div class="list-item" onclick="selectCity('${c.name.replace(/'/g,"\\'")}')">
+        <div class="li-ico">${c.emoji || '🏙'}</div>
+        <div class="li-info">
+          <div class="li-name">${c.name}</div>
+          <div class="li-sub">${c.tagline} · ${c.known_for}</div>
+        </div>
+        <div class="li-arrow">›</div>
+      </div>`).join('');
+  } catch(e) {
+    showError('cities-list', 'Failed to load cities.', `initCities('${state}')`);
+  }
+}
+
+function selectCity(name) {
+  ctx.city = name;
+  goScreen('s-areas', name);
+}
+
+// ═══════════════════════════════════════
+// AREAS
+// ═══════════════════════════════════════
+async function initAreas(city) {
+  document.getElementById('areas-h').textContent = city;
+  document.getElementById('areas-bc').textContent = `${ctx.country} › ${ctx.state} › ${city}`;
+  document.getElementById('areas-sub').textContent = 'Select an area or neighbourhood';
+  showLoading('areas-list', `Loading areas in ${city}...`, 'AI is mapping neighbourhoods');
+
+  try {
+    const prompt = `List the 8-14 most important tourist areas, districts, and neighbourhoods in ${city}, ${ctx.state}, ${ctx.country}.
+Return ONLY a valid JSON array, no markdown. Each object:
+{"name":"Area/District Name","tagline":"Short 4-6 word description","emoji":"1 relevant emoji","num_places":3,"highlight":"The #1 attraction or feature"}
+Cover all major tourist zones — historic districts, modern areas, markets, waterfronts, cultural hubs, nature areas. Sort by tourist importance.`;
+
+    const areas = await callAI(prompt, `areas-${ctx.country}-${ctx.state}-${city}`);
+    document.getElementById('areas-list').innerHTML = areas.map(a => `
+      <div class="list-item" onclick="selectArea('${a.name.replace(/'/g,"\\'")}')">
+        <div class="li-ico">${a.emoji || '📍'}</div>
+        <div class="li-info">
+          <div class="li-name">${a.name}</div>
+          <div class="li-sub">${a.tagline} · ${a.highlight}</div>
+        </div>
+        <div class="li-arrow">›</div>
+      </div>`).join('');
+  } catch(e) {
+    showError('areas-list', 'Failed to load areas.', `initAreas('${city}')`);
+  }
+}
+
+function selectArea(name) {
+  ctx.area = name;
+  goScreen('s-places', name);
+}
+
+// ═══════════════════════════════════════
+// PLACES
+// ═══════════════════════════════════════
+async function initPlaces(area) {
+  document.getElementById('places-h').textContent = area;
+  document.getElementById('places-bc').textContent = `${ctx.city} › ${area}`;
+  document.getElementById('places-sub').textContent = 'AI-generated tourist attractions';
+  document.getElementById('places-list').innerHTML = '';
+  showLoading('places-list', `Discovering places in ${area}...`, 'AI is researching tourist attractions');
+
+  try {
+    const prompt = `List 4-6 top tourist attractions in ${area}, ${ctx.city}, ${ctx.state}, ${ctx.country}.
+Return ONLY a valid JSON array, no markdown. Each object must have ALL these fields:
+{
+  "name": "Attraction name",
+  "type": "historical/nature/religious/beach/food/monument/museum/market/park",
+  "safety": "safe/moderate/caution",
+  "rating": 4.5,
+  "crowd_level": "Low/Medium/High/Very High",
+  "best_time": "Best time to visit e.g. 8-11 AM or October-March",
+  "entry_fee": "Free or approximate USD cost",
+  "speciality": "2-sentence description of what makes this place unique and special",
+  "about": "2-3 sentence historical/cultural background",
+  "local_food": "2-3 specific local dishes or restaurants to try nearby",
+  "safety_note": "Specific safety tip for this location",
+  "tips": ["tip1","tip2","tip3","tip4","tip5"],
+  "wiki_title": "Exact Wikipedia article title for this place e.g. Taj_Mahal or Eiffel_Tower (use underscores, must be a real Wikipedia page)"
+}
+Include well-known AND hidden gems. Be accurate and specific to this exact location.`;
+
+    const places = await callAI(prompt, `places-${ctx.country}-${ctx.state}-${ctx.city}-${area}`);
+
+    // Fetch real Wikipedia photos for each place
+    await Promise.all(places.map(async (p) => {
+      p.photo = await fetchWikiPhoto(p.wiki_title, p.name, ctx.city);
+    }));
+
+    currentPlaces = places;
+    renderPlaceCards(places);
+  } catch(e) {
+    showError('places-list', 'Failed to load places. Please try again.', `initPlaces('${area}')`);
+  }
+}
+
+// ═══════════════════════════════════════
+// WIKIPEDIA REAL PHOTO FETCHER
+// ═══════════════════════════════════════
+async function fetchWikiPhoto(wikiTitle, placeName, city) {
+  // Try with the exact wiki title first
+  const titles = [
+    wikiTitle,
+    placeName,
+    `${placeName} ${city}`
+  ].filter(Boolean);
+
+  for (const title of titles) {
+    try {
+      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/\s+/g,'_'))}`;
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.thumbnail?.source) {
+        // Return larger version by replacing width in URL
+        return data.thumbnail.source.replace(/\/\d+px-/, '/500px-');
+      }
+    } catch { continue; }
+  }
+  // Fallback: use a travel photo placeholder
+  return `https://picsum.photos/seed/${encodeURIComponent(placeName).slice(0,20)}/500/350`;
+}
+
+function renderPlaceCards(list) {
+  if (!list || !list.length) {
+    document.getElementById('places-list').innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:12px;padding:32px">No places found for this filter.</div>';
+    return;
+  }
+  document.getElementById('places-list').innerHTML = list.map((p,i) => `
+    <div class="pcard" onclick="selectPlace(${i})">
+      <div class="pcard-imgs">
+        <img class="pm" src="${p.photo || `https://picsum.photos/seed/${i}place/235/130`}" alt="${p.name}"
+          onerror="this.src='https://picsum.photos/seed/${i}fallback/235/130'"
+          style="object-fit:cover;width:100%;height:100%"/>
+        <div class="ps">
+          <img src="${p.photo || `https://picsum.photos/seed/${i}a/120/64`}" alt=""
+            onerror="this.src='https://picsum.photos/seed/${i}a/120/64'"
+            style="object-fit:cover;width:100%;height:100%"/>
+          <img src="${p.photo || `https://picsum.photos/seed/${i}b/120/64`}" alt=""
+            onerror="this.src='https://picsum.photos/seed/${i}b/120/64'"
+            style="object-fit:cover;width:100%;height:100%"/>
+        </div>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-name">${p.name}</div>
+        <div class="pcard-desc">${p.speciality}</div>
+        <div class="pcard-meta">
+          <span class="sb ${p.safety==='safe'?'safe':p.safety==='moderate'?'moderate':'caution'}">${p.safety==='safe'?'✓ Safe':p.safety==='moderate'?'⚠ Moderate':'⚠ Caution'}</span>
+          <span class="rb">★ ${p.rating}</span>
+          <span class="tb">${p.type}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function encodeKw(arr, i) {
+  const kw = arr && arr[i] ? arr[i] : 'travel';
+  return kw.replace(/\s+/g,'-').toLowerCase();
+}
+
+function applyFilter(f, btn) {
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  const filters = {
+    all: () => true,
+    safe: p => p.safety === 'safe',
+    historical: p => /hist|fort|monument|palace|museum|arch|ruin|castle/i.test(p.type),
+    nature: p => /nature|beach|lake|park|garden|mountain|forest|water/i.test(p.type),
+    religious: p => /relig|temple|shrine|church|mosque|mandir|masjid/i.test(p.type),
+    food: p => /food|market|restaurant|cafe|bazaar|souk/i.test(p.type),
+    beach: p => /beach/i.test(p.type)
+  };
+  renderPlaceCards(currentPlaces.filter(filters[f] || filters.all));
+}
+
+function selectPlace(idx) {
+  goScreen('s-detail', idx);
+}
+
+// ═══════════════════════════════════════
+// DETAIL
+// ═══════════════════════════════════════
+function initDetail(idx) {
+  const p = currentPlaces[idx];
+  if (!p) return;
+  document.getElementById('detail-h').textContent = p.name;
+  document.getElementById('detail-gal').innerHTML = [p.photo, p.photo, p.photo, p.photo]
+    .map((src, i) => `<img src="${src || `https://picsum.photos/seed/${p.name}${i}/195/155`}"
+      alt="${p.name}"
+      onerror="this.src='https://picsum.photos/seed/travel${i}/195/155'"
+      style="height:155px;width:195px;border-radius:13px;object-fit:cover;flex-shrink:0"/>`
+    ).join('');
+  document.getElementById('detail-name').textContent = p.name;
+  document.getElementById('detail-meta').innerHTML = `
+    <span class="sb ${p.safety==='safe'?'safe':p.safety==='moderate'?'moderate':'caution'}">${p.safety==='safe'?'✓ Safe to Visit':p.safety==='moderate'?'⚠ Moderate Caution':'⚠ Exercise Caution'}</span>
+    <span class="rb">★ ${p.rating}</span>
+    <span class="tb">${p.type}</span>`;
+  const sm = {
+    safe:{c:'safe-c',d:'safe-d',t:'Safe to Visit',n:p.safety_note||'Normal travel precautions apply. Keep valuables secure and stay aware of surroundings.'},
+    moderate:{c:'mod-c',d:'mod-d',t:'Moderate Caution',n:p.safety_note||'Stay in tourist areas, avoid late-night visits alone. Keep valuables secured.'},
+    caution:{c:'cau-c',d:'cau-d',t:'Exercise Caution',n:p.safety_note||'Check government travel advisories. Travel in groups and stay vigilant.'}
+  };
+  const s = sm[p.safety] || sm.safe;
+  document.getElementById('detail-safety').innerHTML = `
+    <div class="dscard ${s.c}"><div class="dsh"><div class="sdot ${s.d}"></div>${s.t}</div><div class="dsn">${s.n}</div></div>`;
+  document.getElementById('detail-vig').innerHTML = `
+    <div class="vi"><div class="vil">Best time</div><div class="viv">${p.best_time||'Morning'}</div></div>
+    <div class="vi"><div class="vil">Crowd level</div><div class="viv">${p.crowd_level||'Medium'}</div></div>
+    <div class="vi"><div class="vil">Entry fee</div><div class="viv">${p.entry_fee||'Check locally'}</div></div>
+    <div class="vi"><div class="vil">Location</div><div class="viv">${ctx.area}, ${ctx.city}</div></div>`;
+  document.getElementById('detail-spec').textContent = p.speciality || '';
+  document.getElementById('detail-about').textContent = p.about || '';
+  document.getElementById('detail-food').textContent = p.local_food || 'Explore local restaurants nearby.';
+  document.getElementById('detail-tips').innerHTML = (p.tips||[]).map(t=>`<div class="ti"><div class="tdot"></div><div>${t}</div></div>`).join('');
+  const prev = idx > 0 ? currentPlaces[idx-1] : null;
+  const next = idx < currentPlaces.length-1 ? currentPlaces[idx+1] : null;
+  document.getElementById('detail-nav').innerHTML = `
+    ${prev ? `<button class="lnb" onclick="initDetail(${idx-1})">← ${prev.name.split(' ')[0]}</button>` : '<span></span>'}
+    ${next ? `<button class="lnb pr" onclick="initDetail(${idx+1})">${next.name.split(' ')[0]} →</button>` : '<button class="lnb pr" onclick="goBack()">← Back</button>'}`;
+  document.getElementById('s-detail').querySelector('.dscroll').scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════
+// QUICK NAV (home shortcuts)
+// ═══════════════════════════════════════
+async function quickNav(country, state, city, area) {
+  ctx.country = country;
+  ctx.countryFlag = ALL_COUNTRIES.find(c=>c.name===country)?.flag || '🌍';
+  ctx.state = state;
+  ctx.city = city;
+  ctx.area = area;
+  goScreen('s-places', area);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+renderCountryList(ALL_COUNTRIES);
+</script>
+</body>
+</html>
